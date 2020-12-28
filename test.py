@@ -9,7 +9,7 @@ def assert_equals(
         expected_mnemonic_fingerprint,
         expected_mnemonic):
     assert fingerprint(secret) == expected_secret_fingerprint
-    entropy = derive_entropy(secret, index)
+    entropy = derive_entropy(secret, index, 24)
     words, indices = entropy_to_mnemonic(WORDLIST, entropy)
     computed_mnemonic = " ".join(words)
     assert fingerprint(computed_mnemonic) == expected_mnemonic_fingerprint

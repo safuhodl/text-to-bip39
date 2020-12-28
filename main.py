@@ -9,20 +9,23 @@ DERIVATION_ALGO = "sha512"
 DERIVATION_ITER = 2**20
 DERIVATION_DKLEN = 32
 
+WORD_COUNTS = [12, 15, 18, 21, 24]
+
 def load_wordlist():
     with open("english.txt") as f:
         return [word.rstrip() for word in f.readlines()]
 
-def derive_entropy(key: str, pool_index: int):
+def derive_entropy(key: str, pool_index: int, word_count: int):
     if pool_index < 0 or pool_index >= 2**8:
         raise Exception("pool index must fit into one unsigned byte")
+    dklen = int(word_count + word_count / 3)
     salt = int.to_bytes(pool_index, 1, "big")
     digest = hashlib.pbkdf2_hmac(
             hash_name=DERIVATION_ALGO,
             password=key.encode("utf-8"),
             salt=salt,
             iterations=DERIVATION_ITER,
-            dklen=DERIVATION_DKLEN)
+            dklen=dklen)
     return digest
 
 def fingerprint(data: str) -> str:
@@ -61,11 +64,17 @@ def parse_args():
             help="Derive with the given index [0..255]")
     parser.add_argument("--fingerprint",
             help="Expect the secret to have this fingerprint (fail otherwise)")
+    parser.add_argument("--size", choices=WORD_COUNTS, default=24, type=int,
+            help="How many words the derived mnemonic should have (default 24)")
     return parser.parse_args()
 
 def main():
     args = parse_args()
     wordlist = load_wordlist()
+
+    if args.size not in WORD_COUNTS:
+        print("ERROR: the mnemonic size has to be one of: {}".format(WORD_COUNTS))
+        return
 
     print("Enter the secret (UTF-8 text) to derive from: ")
     secret = sys.stdin.readline().rstrip()
@@ -80,7 +89,7 @@ def main():
         print("ERROR: the secret fingerprints do not match")
         return
 
-    entropy = derive_entropy(secret, index)
+    entropy = derive_entropy(secret, index, args.size)
     words, indices = entropy_to_mnemonic(wordlist, entropy)
 
     mnemonic_fingerprint = fingerprint(" ".join(words))
