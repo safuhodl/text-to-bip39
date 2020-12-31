@@ -66,6 +66,8 @@ def parse_args():
             help="Expect the secret to have this fingerprint (fail otherwise)")
     parser.add_argument("--size", choices=WORD_COUNTS, default=24, type=int,
             help="How many words the derived mnemonic should have (default 24)")
+    parser.add_argument("--display", choices=["horizontal", "vertical"], default="vertical",
+            help="Whether the output should be formatted horizontally or vertically")
     return parser.parse_args()
 
 def main():
@@ -96,7 +98,10 @@ def main():
     print("Mnemonic fingerprint:\t{}".format(mnemonic_fingerprint))
 
     print()
-    format_mnemonic(words, indices)
+    if args.display == "vertical":
+        format_mnemonic(words, indices)
+    elif args.display == "horizontal":
+        print(" ".join(words))
 
 if __name__ == "__main__":
     main()
